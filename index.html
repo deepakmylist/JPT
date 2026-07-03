@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Just Play It.</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Cayman Style Header -->
+    <section class="page-header">
+        <h1 class="project-name">Just Play It.</h1>
+        <h2 class="project-tagline">Browse, Search, and Stream instantly.</h2>
+        
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search for a movie or TV show (Press Enter)...">
+            <button id="search-btn" class="btn">Search</button>
+        </div>
+    </section>
+
+    <!-- Cayman Style Content Body -->
+    <section class="main-content">
+        
+        <!-- Controls & Filters -->
+        <div class="controls-section" id="controls-section">
+            <label for="genre-select"><strong>Browse by Genre:</strong></label>
+            <select id="genre-select">
+                <option value="trending">🔥 Trending This Week</option>
+                <!-- Genres will be injected here via JS -->
+            </select>
+        </div>
+
+        <!-- Media Grid -->
+        <div id="media-grid" class="media-grid">
+            <!-- Movie/TV cards will be injected here -->
+        </div>
+
+        <!-- Inline Player Section (Hidden by default) -->
+        <div id="player-section" class="player-section" style="display: none;">
+            <button id="back-btn" class="btn btn-outline">&larr; Back to Browse</button>
+            
+            <h3 id="player-title">Movie Title</h3>
+            
+            <div class="player-controls">
+                <div class="control-group">
+                    <label for="server-select">Server:</label>
+                    <select id="server-select"></select>
+                </div>
+                
+                <!-- Only visible for TV Shows -->
+				<div class="control-group" id="tv-controls" style="display: none;">
+					<label for="season-select">Season:</label>
+					<select id="season-select"></select>
+					
+					<label for="episode-select">Episode:</label>
+					<select id="episode-select"></select>
+				</div>
+            </div>
+
+            <div class="iframe-container">
+                <iframe id="stream-frame" src="" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+            </div>
+        </div>
+
+        <footer class="site-footer">
+            <span class="site-footer-credits">This page relies entirely on client-side API requests. No data is stored.</span>
+        </footer>
+    </section>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
