@@ -32,6 +32,16 @@ document.addEventListener("DOMContentLoaded", () => {
         await fetchTrending();
     }
 
+    // Helper: Check if a content date is in the past or today
+    function isReleased(dateString) {
+        if (!dateString) return false; // Exclude if no release date exists
+        const releaseDate = new Date(dateString);
+        const today = new Date();
+        // Reset time to midnight for accurate date-only comparison
+        today.setHours(0, 0, 0, 0);
+        return releaseDate <= today;
+    }
+
     // Populate Server Dropdown from Config
     function populateServers() {
         serverSelect.innerHTML = "";
@@ -110,8 +120,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await res.json();
             
             seasonSelect.innerHTML = "";
-            // Filter out "Specials" (season 0) which usually aren't hosted on these providers
-            const validSeasons = data.seasons ? data.seasons.filter(s => s.season_number > 0) : [];
+            // Filter out "Specials" (season 0) and ensure the season itself has already aired
+            const validSeasons = data.seasons ? data.seasons.filter(s => s.season_number > 0 && isReleased(s.air_date)) : [];
             
             if (validSeasons.length === 0) {
                 seasonSelect.innerHTML = `<option value="1">Season 1</option>`;
@@ -123,7 +133,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     opt.textContent = `Season ${season.season_number}`;
                     seasonSelect.appendChild(opt);
                 });
-                // Automatically load episodes for the first season in the dropdown
                 await loadEpisodes(tvId, seasonSelect.value);
             }
         } catch (err) {
@@ -139,19 +148,23 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await res.json();
             
             episodeSelect.innerHTML = "";
-            if (data.episodes && data.episodes.length > 0) {
-                data.episodes.forEach(episode => {
+            
+            // CRITICAL FIX: Filter out unreleased episodes
+            const releasedEpisodes = data.episodes ? data.episodes.filter(ep => isReleased(ep.air_date)) : [];
+            
+            if (releasedEpisodes.length > 0) {
+                releasedEpisodes.forEach(episode => {
                     const opt = document.createElement("option");
                     opt.value = episode.episode_number;
-                    // Include the episode name in the dropdown for better UX
                     opt.textContent = `Episode ${episode.episode_number}: ${episode.name}`;
                     episodeSelect.appendChild(opt);
                 });
             } else {
-                episodeSelect.innerHTML = `<option value="1">Episode 1</option>`;
+                const opt = document.createElement("option");
+                opt.textContent = "No episodes released yet";
+                episodeSelect.appendChild(opt);
             }
             
-            // Once episodes are loaded, fire up the stream
             updateStreamUrl();
         } catch (err) {
             console.error("Failed to load episodes", err);
@@ -161,12 +174,19 @@ document.addEventListener("DOMContentLoaded", () => {
     // Render Grid UI
     function renderGrid(items) {
         mediaGrid.innerHTML = "";
-        if (items.length === 0) {
-            mediaGrid.innerHTML = "<p>No results found.</p>";
+        
+        // CRITICAL FIX: Filter out unreleased movies and TV shows completely from the UI
+        const releasedItems = items.filter(item => {
+            const targetDate = item.release_date || item.first_air_date;
+            return isReleased(targetDate);
+        });
+
+        if (releasedItems.length === 0) {
+            mediaGrid.innerHTML = "<p>No released titles found matching this criteria.</p>";
             return;
         }
 
-        items.forEach(item => {
+        releasedItems.forEach(item => {
             const title = item.title || item.name;
             const type = item.media_type || (item.first_air_date ? "tv" : "movie"); 
 
@@ -205,8 +225,6 @@ document.addEventListener("DOMContentLoaded", () => {
             tvControls.style.display = "flex";
             seasonSelect.innerHTML = "<option>Loading...</option>";
             episodeSelect.innerHTML = "<option>Loading...</option>";
-            
-            // Fetch seasons, which will subsequently fetch episodes and update the URL
             loadSeasons(item.id); 
         } else {
             tvControls.style.display = "none";
@@ -216,6 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.scrollTo(0, 0); 
     }
 
+    // Close Player
     function closePlayer() {
         currentItem = null;
         streamFrame.src = ""; 
@@ -224,16 +243,15 @@ document.addEventListener("DOMContentLoaded", () => {
         mediaGrid.style.display = "grid";
     }
 
-    // Construct streaming URL based on configs and inputs
+    // Construct streaming URL
     function updateStreamUrl() {
-        if (!currentItem) return;
+        if (!currentItem || !episodeSelect.value) return;
 
         const providerKey = serverSelect.value;
         const provider = AppConfig.STREAM_PROVIDERS[providerKey];
         let finalUrl = "";
 
         if (currentItem.type === "tv") {
-            // Read from the newly populated selects
             const s = seasonSelect.value || 1;
             const e = episodeSelect.value || 1;
             finalUrl = `${provider.tvUrl}${currentItem.id}/${s}/${e}`;
@@ -259,17 +277,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     backBtn.addEventListener("click", closePlayer);
-    
     serverSelect.addEventListener("change", updateStreamUrl);
     
-    // When a new season is selected, fetch the episodes for that specific season
     seasonSelect.addEventListener("change", (e) => {
         if (currentItem) {
             loadEpisodes(currentItem.id, e.target.value);
         }
     });
     
-    // When a new episode is selected, just update the iframe URL
     episodeSelect.addEventListener("change", updateStreamUrl);
 
     // Boot
