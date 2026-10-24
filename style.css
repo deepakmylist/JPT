@@ -225,3 +225,62 @@ body {
     color: #819198;
     text-align: center;
 }
+
+
+/* GitHub repository button — top-right corner */
+.github-repo-btn {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    z-index: 10;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 6px;
+
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.10);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.github-repo-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.65);
+    transform: translateY(-1px);
+    color: #ffffff;
+}
+
+.github-repo-btn:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 3px;
+}
+
+/* Ensure the button is positioned relative to the header */
+.page-header {
+    position: relative;
+}
+
+/* Smaller screens */
+@media screen and (max-width: 480px) {
+    .github-repo-btn {
+        top: 12px;
+        right: 12px;
+        padding: 8px;
+    }
+
+    .github-repo-btn span {
+        display: none;
+    }
+}
